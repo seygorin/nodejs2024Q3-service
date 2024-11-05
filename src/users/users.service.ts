@@ -2,9 +2,10 @@ import {
   Injectable,
   NotFoundException,
   ForbiddenException,
+  BadRequestException,
 } from '@nestjs/common';
 import { v4 as uuidv4 } from 'uuid';
-import { User } from './entities/user.entity';
+import { User, UserResponse } from './entities/user.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdatePasswordDto } from './dto/update-password.dto';
 
@@ -12,20 +13,19 @@ import { UpdatePasswordDto } from './dto/update-password.dto';
 export class UsersService {
   private users: User[] = [];
 
-  findAll(): Omit<User, 'password'>[] {
-    return this.users.map(({ password, ...user }) => user);
+  findAll(): UserResponse[] {
+    return this.users.map((user) => user.toResponse());
   }
 
-  findOne(id: string): Omit<User, 'password'> {
+  findOne(id: string): UserResponse {
     const user = this.users.find((user) => user.id === id);
     if (!user) {
       throw new NotFoundException(`User with ID ${id} not found`);
     }
-    const { password, ...userWithoutPassword } = user;
-    return userWithoutPassword;
+    return user.toResponse();
   }
 
-  create(createUserDto: CreateUserDto): Omit<User, 'password'> {
+  create(createUserDto: CreateUserDto): UserResponse {
     const newUser = new User({
       ...createUserDto,
       id: uuidv4(),
@@ -34,42 +34,36 @@ export class UsersService {
       updatedAt: Date.now(),
     });
 
+    if (!newUser.validate()) {
+      throw new BadRequestException('Invalid user data');
+    }
+
     this.users.push(newUser);
-    const { password, ...userWithoutPassword } = newUser;
-    return userWithoutPassword;
+    return newUser.toResponse();
   }
 
   updatePassword(
     id: string,
     updatePasswordDto: UpdatePasswordDto,
-  ): Omit<User, 'password'> {
-    const userIndex = this.users.findIndex((user) => user.id === id);
-    if (userIndex === -1) {
+  ): UserResponse {
+    const user = this.users.find((user) => user.id === id);
+    if (!user) {
       throw new NotFoundException(`User with ID ${id} not found`);
     }
 
-    const user = this.users[userIndex];
-    if (user.password !== updatePasswordDto.oldPassword) {
+    if (!user.checkPassword(updatePasswordDto.oldPassword)) {
       throw new ForbiddenException('Old password is incorrect');
     }
 
-    const updatedUser = {
-      ...user,
-      password: updatePasswordDto.newPassword,
-      version: user.version + 1,
-      updatedAt: Date.now(),
-    };
-
-    this.users[userIndex] = updatedUser;
-    const { password, ...userWithoutPassword } = updatedUser;
-    return userWithoutPassword;
+    user.updatePassword(updatePasswordDto.newPassword);
+    return user.toResponse();
   }
 
   remove(id: string): void {
-    const userIndex = this.users.findIndex((user) => user.id === id);
-    if (userIndex === -1) {
+    const index = this.users.findIndex((user) => user.id === id);
+    if (index === -1) {
       throw new NotFoundException(`User with ID ${id} not found`);
     }
-    this.users.splice(userIndex, 1);
+    this.users.splice(index, 1);
   }
 }

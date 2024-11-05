@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { v4 as uuidv4 } from 'uuid';
 import { Track } from './entities/track.entity';
 import { CreateTrackDto } from './dto/create-track.dto';
@@ -24,6 +28,11 @@ export class TracksService {
       id: uuidv4(),
       ...createTrackDto,
     });
+
+    if (!track.validate()) {
+      throw new BadRequestException('Invalid track data');
+    }
+
     this.tracks.push(track);
     return track;
   }
@@ -34,11 +43,16 @@ export class TracksService {
       throw new NotFoundException(`Track with ID ${id} not found`);
     }
 
-    this.tracks[index] = {
+    const updatedTrack = new Track({
       ...this.tracks[index],
       ...updateTrackDto,
-    };
+    });
 
+    if (!updatedTrack.validate()) {
+      throw new BadRequestException('Invalid track data');
+    }
+
+    this.tracks[index] = updatedTrack;
     return this.tracks[index];
   }
 
@@ -51,20 +65,14 @@ export class TracksService {
   }
 
   removeArtistFromTracks(artistId: string): void {
-    this.tracks = this.tracks.map((track) => {
-      if (track.artistId === artistId) {
-        return { ...track, artistId: null };
-      }
-      return track;
-    });
+    this.tracks
+      .filter((track) => track.artistId === artistId)
+      .forEach((track) => track.removeArtist());
   }
 
   removeAlbumFromTracks(albumId: string): void {
-    this.tracks = this.tracks.map((track) => {
-      if (track.albumId === albumId) {
-        return { ...track, albumId: null };
-      }
-      return track;
-    });
+    this.tracks
+      .filter((track) => track.albumId === albumId)
+      .forEach((track) => track.removeAlbum());
   }
 }

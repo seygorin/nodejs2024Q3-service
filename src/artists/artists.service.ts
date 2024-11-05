@@ -31,34 +31,31 @@ export class ArtistsService {
   }
 
   create(createArtistDto: CreateArtistDto): Artist {
-    if (!createArtistDto.name || typeof createArtistDto.grammy !== 'boolean') {
-      throw new BadRequestException('Name and grammy status are required');
-    }
-
     const artist = new Artist({
       id: uuidv4(),
       ...createArtistDto,
     });
+
+    if (!artist.validate()) {
+      throw new BadRequestException('Invalid artist data');
+    }
+
     this.artists.push(artist);
     return artist;
   }
 
   update(id: string, updateArtistDto: CreateArtistDto): Artist {
-    if (!updateArtistDto.name || typeof updateArtistDto.grammy !== 'boolean') {
-      throw new BadRequestException('Name and grammy status are required');
+    const artist = this.findOne(id);
+
+    try {
+      artist.update(updateArtistDto);
+      return artist;
+    } catch (error) {
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+      throw new BadRequestException('Invalid artist data');
     }
-
-    const index = this.artists.findIndex((artist) => artist.id === id);
-    if (index === -1) {
-      throw new NotFoundException(`Artist with ID ${id} not found`);
-    }
-
-    this.artists[index] = {
-      ...this.artists[index],
-      ...updateArtistDto,
-    };
-
-    return this.artists[index];
   }
 
   remove(id: string): void {
@@ -68,9 +65,7 @@ export class ArtistsService {
     }
 
     this.tracksService.removeArtistFromTracks(id);
-
     this.albumsService.removeArtistFromAlbums(id);
-
     this.artists.splice(index, 1);
   }
 }

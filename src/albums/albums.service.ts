@@ -27,32 +27,32 @@ export class AlbumsService {
   }
 
   create(createAlbumDto: CreateAlbumDto): Album {
-    this.validateAlbumDto(createAlbumDto);
-
     const album = new Album({
       id: uuidv4(),
       ...createAlbumDto,
       artistId: createAlbumDto.artistId || null,
     });
+
+    if (!album.validate()) {
+      throw new BadRequestException('Invalid album data');
+    }
+
     this.albums.push(album);
     return album;
   }
 
   update(id: string, updateAlbumDto: CreateAlbumDto): Album {
-    this.validateAlbumDto(updateAlbumDto);
+    const album = this.findOne(id);
 
-    const index = this.albums.findIndex((album) => album.id === id);
-    if (index === -1) {
-      throw new NotFoundException(`Album with ID ${id} not found`);
+    try {
+      album.update(updateAlbumDto);
+      return album;
+    } catch (error) {
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+      throw new BadRequestException('Invalid album data');
     }
-
-    this.albums[index] = {
-      ...this.albums[index],
-      ...updateAlbumDto,
-      artistId: updateAlbumDto.artistId || null,
-    };
-
-    return this.albums[index];
   }
 
   remove(id: string): void {
@@ -62,49 +62,12 @@ export class AlbumsService {
     }
 
     this.tracksService.removeAlbumFromTracks(id);
-
     this.albums.splice(index, 1);
   }
 
   removeArtistFromAlbums(artistId: string): void {
-    this.albums = this.albums.map((album) => {
-      if (album.artistId === artistId) {
-        return { ...album, artistId: null };
-      }
-      return album;
-    });
-  }
-
-  private validateAlbumDto(dto: CreateAlbumDto): void {
-    if (!dto) {
-      throw new BadRequestException('Album data is required');
-    }
-
-    if (!dto.name || typeof dto.name !== 'string' || !dto.name.trim()) {
-      throw new BadRequestException(
-        'Album name is required and must be a non-empty string',
-      );
-    }
-
-    if (
-      !dto.year ||
-      typeof dto.year !== 'number' ||
-      dto.year < 1900 ||
-      dto.year > 2024
-    ) {
-      throw new BadRequestException(
-        'Album year is required and must be a valid year between 1900 and 2024',
-      );
-    }
-
-    if (
-      dto.artistId !== undefined &&
-      dto.artistId !== null &&
-      typeof dto.artistId !== 'string'
-    ) {
-      throw new BadRequestException(
-        'Artist ID must be a valid UUID string or null',
-      );
-    }
+    this.albums
+      .filter((album) => album.artistId === artistId)
+      .forEach((album) => album.removeArtist());
   }
 }
