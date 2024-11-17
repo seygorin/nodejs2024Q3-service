@@ -25,6 +25,37 @@ npm start
 
 The app will start on port (4000 as default). You can change the port in .env file.
 
+## Docker
+
+### Prerequisites
+
+- Docker - [Download & Install Docker](https://docs.docker.com/get-docker/)
+- Docker Compose - [Download & Install Docker Compose](https://docs.docker.com/compose/install/)
+
+### Running with Docker
+
+1. Build and run the containers:
+
+```bash
+docker-compose up -d
+```
+
+2. The application will be available at:
+- API: http://localhost:4000
+- Swagger UI: http://localhost:4000/api
+
+3. View logs:
+
+```bash
+docker-compose logs -f
+```
+
+4. Stop containers:
+
+```bash
+docker-compose down
+```
+
 ## Documentation
 
 After starting the app, you can explore API documentation:
