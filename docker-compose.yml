@@ -3,6 +3,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      target: production
     ports:
       - '4000:4000'
     environment:
@@ -10,11 +11,16 @@ services:
       - PORT=4000
     volumes:
       - ./src:/app/src
+      - ./dist:/app/dist
+      - ./doc:/app/doc
+      - ./tsconfig.json:/app/tsconfig.json
+      - ./tsconfig.build.json:/app/tsconfig.build.json
     networks:
       - library-network
     depends_on:
       - db
     restart: always
+    command: nest start --watch
 
   db:
     image: postgres:15-alpine
