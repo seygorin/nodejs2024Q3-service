@@ -4,27 +4,17 @@
 
 - Git - [Download & Install Git](https://git-scm.com/downloads)
 - Node.js - [Download & Install Node.js](https://nodejs.org/en/download/) and the npm package manager
-- Docker - [Download & Install Docker](https://docs.docker.com/get-docker/)
-- Docker Compose - [Download & Install Docker Compose](https://docs.docker.com/compose/install/)
+- Docker Desktop - [Download & Install Docker](https://www.docker.com/products/docker-desktop/)
 
 ## Installation
 
 1. Clone the repository:
 ```bash
-git clone  https://github.com/seygorin/nodejs2024Q3-service
-cd home-library
+git clone https://github.com/seygorin/nodejs2024Q3-service
+cd nodejs2024Q3-service
 ```
 
-2. Create .env file in the root directory with the following content:
-```env
-PORT=4000
-PORT_PRISMA=5555
-POSTGRES_DB=library
-POSTGRES_USER=postgres
-POSTGRES_PASSWORD=postgres
-POSTGRES_PORT=5432
-DATABASE_URL="postgresql://postgres:postgres@db:5432/library?schema=public"
-```
+2. Change .env file in the root directory if you want to change the default port or database credentials.
 
 ## Running Application
 
@@ -33,7 +23,7 @@ DATABASE_URL="postgresql://postgres:postgres@db:5432/library?schema=public"
 1. Build and start containers:
 ```bash
 npm run docker:build  # Build containers
-npm run docker:up     # Start containers
+npm run docker:up     # Start containers and wait a bit
 ```
 
 2. View logs:
@@ -42,7 +32,7 @@ npm run docker:logs
 ```
 
 3. Access services:
-- API: http://localhost:4000
+- API: http://localhost:4000 (default)
 - Swagger UI: http://localhost:4000/api
 - Prisma Studio: http://localhost:5555 (after running `npm run prisma:studio`)
 
@@ -62,7 +52,6 @@ npm install
 ```bash
 npm run start        # Production mode
 npm run start:dev    # Development mode with watch
-npm run start:debug  # Debug mode
 ```
 
 ## Database Management
@@ -82,7 +71,6 @@ npm run prisma:generate
 Run tests:
 ```bash
 npm run test         # Run all tests without authorization
-npm run test:auth    # Run all tests with authorization
 ```
 
 ## Code Quality
