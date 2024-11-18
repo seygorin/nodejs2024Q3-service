@@ -3,71 +3,105 @@ import {
   NotFoundException,
   BadRequestException,
 } from '@nestjs/common';
-import { v4 as uuidv4 } from 'uuid';
-import { Album } from './entities/album.entity';
 import { CreateAlbumDto } from './dto/create-album.dto';
+import { PrismaService } from '../prisma/prisma.service';
 import { TracksService } from '../tracks/tracks.service';
 
 @Injectable()
 export class AlbumsService {
-  private albums: Album[] = [];
+  constructor(
+    private prisma: PrismaService,
+    private readonly tracksService: TracksService,
+  ) {}
 
-  constructor(private readonly tracksService: TracksService) {}
-
-  findAll(): Album[] {
-    return this.albums;
+  async findAll() {
+    return this.prisma.album.findMany({
+      include: {
+        artist: true,
+      },
+    });
   }
 
-  findOne(id: string): Album {
-    const album = this.albums.find((album) => album.id === id);
+  async findOne(id: string) {
+    const album = await this.prisma.album.findUnique({
+      where: { id },
+      include: {
+        artist: true,
+      },
+    });
+
     if (!album) {
       throw new NotFoundException(`Album with ID ${id} not found`);
     }
+
     return album;
   }
 
-  create(createAlbumDto: CreateAlbumDto): Album {
-    const album = new Album({
-      id: uuidv4(),
-      ...createAlbumDto,
-      artistId: createAlbumDto.artistId || null,
-    });
-
-    if (!album.validate()) {
-      throw new BadRequestException('Invalid album data');
-    }
-
-    this.albums.push(album);
-    return album;
-  }
-
-  update(id: string, updateAlbumDto: CreateAlbumDto): Album {
-    const album = this.findOne(id);
-
+  async create(createAlbumDto: CreateAlbumDto) {
     try {
-      album.update(updateAlbumDto);
-      return album;
+      return await this.prisma.album.create({
+        data: {
+          name: createAlbumDto.name,
+          year: createAlbumDto.year,
+          artistId: createAlbumDto.artistId || null,
+        },
+        include: {
+          artist: true,
+        },
+      });
     } catch (error) {
-      if (error instanceof BadRequestException) {
-        throw error;
+      if (error.code === 'P2003') {
+        throw new BadRequestException(
+          `Artist with ID ${createAlbumDto.artistId} not found`,
+        );
       }
       throw new BadRequestException('Invalid album data');
     }
   }
 
-  remove(id: string): void {
-    const index = this.albums.findIndex((album) => album.id === id);
-    if (index === -1) {
-      throw new NotFoundException(`Album with ID ${id} not found`);
+  async update(id: string, updateAlbumDto: CreateAlbumDto) {
+    try {
+      return await this.prisma.album.update({
+        where: { id },
+        data: {
+          name: updateAlbumDto.name,
+          year: updateAlbumDto.year,
+          artistId: updateAlbumDto.artistId || null,
+        },
+        include: {
+          artist: true,
+        },
+      });
+    } catch (error) {
+      if (error.code === 'P2025') {
+        throw new NotFoundException(`Album with ID ${id} not found`);
+      }
+      if (error.code === 'P2003') {
+        throw new BadRequestException(
+          `Artist with ID ${updateAlbumDto.artistId} not found`,
+        );
+      }
+      throw new BadRequestException('Invalid album data');
     }
-
-    this.tracksService.removeAlbumFromTracks(id);
-    this.albums.splice(index, 1);
   }
 
-  removeArtistFromAlbums(artistId: string): void {
-    this.albums
-      .filter((album) => album.artistId === artistId)
-      .forEach((album) => album.removeArtist());
+  async remove(id: string) {
+    try {
+      await this.prisma.album.delete({
+        where: { id },
+      });
+    } catch (error) {
+      if (error.code === 'P2025') {
+        throw new NotFoundException(`Album with ID ${id} not found`);
+      }
+      throw error;
+    }
+  }
+
+  async removeArtistFromAlbums(artistId: string) {
+    await this.prisma.album.updateMany({
+      where: { artistId },
+      data: { artistId: null },
+    });
   }
 }

@@ -3,76 +3,128 @@ import {
   NotFoundException,
   BadRequestException,
 } from '@nestjs/common';
-import { v4 as uuidv4 } from 'uuid';
-import { Track } from './entities/track.entity';
 import { CreateTrackDto } from './dto/create-track.dto';
+import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class TracksService {
-  private tracks: Track[] = [];
+  constructor(private prisma: PrismaService) {}
 
-  findAll(): Track[] {
-    return this.tracks;
+  async findAll() {
+    return this.prisma.track.findMany({
+      include: {
+        artist: true,
+        album: true,
+      },
+    });
   }
 
-  findOne(id: string): Track {
-    const track = this.tracks.find((track) => track.id === id);
+  async findOne(id: string) {
+    const track = await this.prisma.track.findUnique({
+      where: { id },
+      include: {
+        artist: true,
+        album: true,
+      },
+    });
+
     if (!track) {
       throw new NotFoundException(`Track with ID ${id} not found`);
     }
+
     return track;
   }
 
-  create(createTrackDto: CreateTrackDto): Track {
-    const track = new Track({
-      id: uuidv4(),
-      ...createTrackDto,
-    });
-
-    if (!track.validate()) {
+  async create(createTrackDto: CreateTrackDto) {
+    try {
+      return await this.prisma.track.create({
+        data: {
+          name: createTrackDto.name,
+          duration: createTrackDto.duration,
+          artistId: createTrackDto.artistId || null,
+          albumId: createTrackDto.albumId || null,
+        },
+        include: {
+          artist: true,
+          album: true,
+        },
+      });
+    } catch (error) {
+      if (error.code === 'P2003') {
+        if (error.meta?.field_name?.includes('artistId')) {
+          throw new BadRequestException(
+            `Artist with ID ${createTrackDto.artistId} not found`,
+          );
+        }
+        if (error.meta?.field_name?.includes('albumId')) {
+          throw new BadRequestException(
+            `Album with ID ${createTrackDto.albumId} not found`,
+          );
+        }
+      }
       throw new BadRequestException('Invalid track data');
     }
-
-    this.tracks.push(track);
-    return track;
   }
 
-  update(id: string, updateTrackDto: CreateTrackDto): Track {
-    const index = this.tracks.findIndex((track) => track.id === id);
-    if (index === -1) {
-      throw new NotFoundException(`Track with ID ${id} not found`);
-    }
-
-    const updatedTrack = new Track({
-      ...this.tracks[index],
-      ...updateTrackDto,
-    });
-
-    if (!updatedTrack.validate()) {
+  async update(id: string, updateTrackDto: CreateTrackDto) {
+    try {
+      return await this.prisma.track.update({
+        where: { id },
+        data: {
+          name: updateTrackDto.name,
+          duration: updateTrackDto.duration,
+          artistId: updateTrackDto.artistId || null,
+          albumId: updateTrackDto.albumId || null,
+        },
+        include: {
+          artist: true,
+          album: true,
+        },
+      });
+    } catch (error) {
+      if (error.code === 'P2025') {
+        throw new NotFoundException(`Track with ID ${id} not found`);
+      }
+      if (error.code === 'P2003') {
+        if (error.meta?.field_name?.includes('artistId')) {
+          throw new BadRequestException(
+            `Artist with ID ${updateTrackDto.artistId} not found`,
+          );
+        }
+        if (error.meta?.field_name?.includes('albumId')) {
+          throw new BadRequestException(
+            `Album with ID ${updateTrackDto.albumId} not found`,
+          );
+        }
+      }
       throw new BadRequestException('Invalid track data');
     }
-
-    this.tracks[index] = updatedTrack;
-    return this.tracks[index];
   }
 
-  remove(id: string): void {
-    const index = this.tracks.findIndex((track) => track.id === id);
-    if (index === -1) {
-      throw new NotFoundException(`Track with ID ${id} not found`);
+  async remove(id: string) {
+    try {
+      await this.prisma.track.delete({
+        where: { id },
+      });
+    } catch (error) {
+      if (error.code === 'P2025') {
+        throw new NotFoundException(`Track with ID ${id} not found`);
+      }
+      throw error;
     }
-    this.tracks.splice(index, 1);
   }
 
-  removeArtistFromTracks(artistId: string): void {
-    this.tracks
-      .filter((track) => track.artistId === artistId)
-      .forEach((track) => track.removeArtist());
+  async removeArtistFromTracks(artistId: string) {
+    await this.prisma.track.updateMany({
+      where: { artistId },
+      data: { artistId: null },
+    });
   }
 
-  removeAlbumFromTracks(albumId: string): void {
-    this.tracks
-      .filter((track) => track.albumId === albumId)
-      .forEach((track) => track.removeAlbum());
+  async removeAlbumFromTracks(albumId: string) {
+    await this.prisma.track.updateMany({
+      where: { albumId },
+      data: { albumId: null },
+    });
   }
 }

@@ -1,27 +1,4 @@
 services:
-  app:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      target: production
-    ports:
-      - '4000:4000'
-    environment:
-      - DATABASE_URL=postgresql://postgres:postgres@db:5432/library
-      - PORT=4000
-    volumes:
-      - ./src:/app/src
-      - ./dist:/app/dist
-      - ./doc:/app/doc
-      - ./tsconfig.json:/app/tsconfig.json
-      - ./tsconfig.build.json:/app/tsconfig.build.json
-    networks:
-      - library-network
-    depends_on:
-      - db
-    restart: always
-    command: nest start --watch
-
   db:
     image: postgres:15-alpine
     environment:
@@ -33,15 +10,44 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - postgres_logs:/var/log/postgresql
-      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
       - library-network
     restart: always
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    ports:
+      - '4000:4000'
+      - '5555:5555'
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/library?schema=public
+      - PORT=4000
+    volumes:
+      - ./src:/app/src
+      - ./dist:/app/dist
+      - ./prisma:/app/prisma
+      - ./doc:/app/doc
+      - ./tsconfig.json:/app/tsconfig.json
+      - ./tsconfig.build.json:/app/tsconfig.build.json
+    networks:
+      - library-network
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: always
+    command: sh -c "npx prisma generate && npx prisma migrate deploy && node dist/main.js"
 
 networks:
   library-network:
     driver: bridge
-
 volumes:
   postgres_data:
   postgres_logs:
