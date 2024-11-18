@@ -22,8 +22,6 @@ model Artist {
   id        String     @id @default(uuid()) @db.Uuid
   name      String
   grammy    Boolean
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
   albums    Album[]
   tracks    Track[]
   favorites Favorites[] @relation("ArtistToFavorites")
@@ -36,10 +34,8 @@ model Album {
   name      String
   year      Int
   artistId  String?    @db.Uuid
-  artist    Artist?    @relation(fields: [artistId], references: [id])
+  artist    Artist?    @relation(fields: [artistId], references: [id], onDelete: SetNull)
   tracks    Track[]
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
   favorites Favorites[] @relation("AlbumToFavorites")
 
   @@map("albums")
@@ -51,22 +47,18 @@ model Track {
   duration  Int
   artistId  String?    @db.Uuid
   albumId   String?    @db.Uuid
-  artist    Artist?    @relation(fields: [artistId], references: [id])
-  album     Album?     @relation(fields: [albumId], references: [id])
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
+  artist    Artist?    @relation(fields: [artistId], references: [id], onDelete: SetNull)
+  album     Album?     @relation(fields: [albumId], references: [id], onDelete: SetNull)
   favorites Favorites[] @relation("TrackToFavorites")
 
   @@map("tracks")
 }
 
 model Favorites {
-  id        String   @id @default(uuid()) @db.Uuid
-  artists   Artist[] @relation("ArtistToFavorites")
-  albums    Album[]  @relation("AlbumToFavorites")
-  tracks    Track[]  @relation("TrackToFavorites")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id      String   @id @default(uuid()) @db.Uuid
+  artists Artist[] @relation("ArtistToFavorites")
+  albums  Album[]  @relation("AlbumToFavorites")
+  tracks  Track[]  @relation("TrackToFavorites")
 
   @@map("favorites")
 }

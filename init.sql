@@ -42,16 +42,24 @@ CREATE TABLE IF NOT EXISTS tracks (
 );
 
 CREATE TABLE IF NOT EXISTS favorites (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    artistId UUID,
-    albumId UUID,
-    trackId UUID,
-    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (artistId) REFERENCES artists(id) ON DELETE CASCADE,
-    FOREIGN KEY (albumId) REFERENCES albums(id) ON DELETE CASCADE,
-    FOREIGN KEY (trackId) REFERENCES tracks(id) ON DELETE CASCADE,
-    UNIQUE(artistId),
-    UNIQUE(albumId),
-    UNIQUE(trackId)
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid()
+);
+
+CREATE TABLE IF NOT EXISTS favorites_artists (
+    favorites_id UUID REFERENCES favorites(id) ON DELETE CASCADE,
+    artist_id UUID REFERENCES artists(id) ON DELETE CASCADE,
+    PRIMARY KEY (favorites_id, artist_id)
+);
+
+CREATE TABLE IF NOT EXISTS favorites_albums (
+    favorites_id UUID REFERENCES favorites(id) ON DELETE CASCADE,
+    album_id UUID REFERENCES albums(id) ON DELETE CASCADE,
+    PRIMARY KEY (favorites_id, album_id)
+);
+
+CREATE TABLE IF NOT EXISTS favorites_tracks (
+    favorites_id UUID REFERENCES favorites(id) ON DELETE CASCADE,
+    track_id UUID REFERENCES tracks(id) ON DELETE CASCADE,
+    PRIMARY KEY (favorites_id, track_id)
 );
 

@@ -105,8 +105,8 @@ describe('Users (e2e)', () => {
       expect(response.body).not.toHaveProperty('password');
       expect(validate(id)).toBe(true);
       expect(version).toBe(1);
-      expect(typeof createdAt).toBe('string');
-      expect(typeof updatedAt).toBe('string');
+      expect(typeof createdAt).toBe('number');
+      expect(typeof updatedAt).toBe('number');
       expect(createdAt === updatedAt).toBe(true);
 
       const cleanupResponse = await unauthorizedRequest
@@ -178,8 +178,8 @@ describe('Users (e2e)', () => {
       expect(validate(updatedId)).toBe(true);
       expect(createdId).toBe(updatedId);
       expect(version).toBe(2);
-      expect(typeof createdAt).toBe('string');
-      expect(typeof updatedAt).toBe('string');
+      expect(typeof createdAt).toBe('number');
+      expect(typeof updatedAt).toBe('number');
       expect(createdAt === updatedAt).toBe(false);
 
       const updateResponse2 = await unauthorizedRequest

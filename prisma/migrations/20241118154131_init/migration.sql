@@ -1,35 +1,51 @@
-/*
-  Warnings:
+-- CreateTable
+CREATE TABLE "users" (
+    "id" UUID NOT NULL,
+    "login" TEXT NOT NULL,
+    "password" TEXT NOT NULL,
+    "version" INTEGER NOT NULL DEFAULT 1,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
 
-  - You are about to drop the column `albumId` on the `favorites` table. All the data in the column will be lost.
-  - You are about to drop the column `artistId` on the `favorites` table. All the data in the column will be lost.
-  - You are about to drop the column `trackId` on the `favorites` table. All the data in the column will be lost.
-  - Added the required column `updatedAt` to the `favorites` table without a default value. This is not possible if the table is not empty.
+    CONSTRAINT "users_pkey" PRIMARY KEY ("id")
+);
 
-*/
--- DropForeignKey
-ALTER TABLE "favorites" DROP CONSTRAINT "favorites_albumId_fkey";
+-- CreateTable
+CREATE TABLE "artists" (
+    "id" UUID NOT NULL,
+    "name" TEXT NOT NULL,
+    "grammy" BOOLEAN NOT NULL,
 
--- DropForeignKey
-ALTER TABLE "favorites" DROP CONSTRAINT "favorites_artistId_fkey";
+    CONSTRAINT "artists_pkey" PRIMARY KEY ("id")
+);
 
--- DropForeignKey
-ALTER TABLE "favorites" DROP CONSTRAINT "favorites_trackId_fkey";
+-- CreateTable
+CREATE TABLE "albums" (
+    "id" UUID NOT NULL,
+    "name" TEXT NOT NULL,
+    "year" INTEGER NOT NULL,
+    "artistId" UUID,
 
--- DropIndex
-DROP INDEX "favorites_albumId_key";
+    CONSTRAINT "albums_pkey" PRIMARY KEY ("id")
+);
 
--- DropIndex
-DROP INDEX "favorites_artistId_key";
+-- CreateTable
+CREATE TABLE "tracks" (
+    "id" UUID NOT NULL,
+    "name" TEXT NOT NULL,
+    "duration" INTEGER NOT NULL,
+    "artistId" UUID,
+    "albumId" UUID,
 
--- DropIndex
-DROP INDEX "favorites_trackId_key";
+    CONSTRAINT "tracks_pkey" PRIMARY KEY ("id")
+);
 
--- AlterTable
-ALTER TABLE "favorites" DROP COLUMN "albumId",
-DROP COLUMN "artistId",
-DROP COLUMN "trackId",
-ADD COLUMN     "updatedAt" TIMESTAMP(3) NOT NULL;
+-- CreateTable
+CREATE TABLE "favorites" (
+    "id" UUID NOT NULL,
+
+    CONSTRAINT "favorites_pkey" PRIMARY KEY ("id")
+);
 
 -- CreateTable
 CREATE TABLE "_ArtistToFavorites" (
@@ -66,6 +82,15 @@ CREATE UNIQUE INDEX "_TrackToFavorites_AB_unique" ON "_TrackToFavorites"("A", "B
 
 -- CreateIndex
 CREATE INDEX "_TrackToFavorites_B_index" ON "_TrackToFavorites"("B");
+
+-- AddForeignKey
+ALTER TABLE "albums" ADD CONSTRAINT "albums_artistId_fkey" FOREIGN KEY ("artistId") REFERENCES "artists"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "tracks" ADD CONSTRAINT "tracks_artistId_fkey" FOREIGN KEY ("artistId") REFERENCES "artists"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "tracks" ADD CONSTRAINT "tracks_albumId_fkey" FOREIGN KEY ("albumId") REFERENCES "albums"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "_ArtistToFavorites" ADD CONSTRAINT "_ArtistToFavorites_A_fkey" FOREIGN KEY ("A") REFERENCES "artists"("id") ON DELETE CASCADE ON UPDATE CASCADE;

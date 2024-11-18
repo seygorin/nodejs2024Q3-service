@@ -17,35 +17,53 @@ export class FavoritesService {
   async findAll(): Promise<FavoritesResponse> {
     const favorites = await this.getOrCreateFavorites();
 
+    const favoritesWithRelations = await this.prisma.favorites.findUnique({
+      where: { id: favorites.id },
+      select: {
+        artists: {
+          select: {
+            id: true,
+            name: true,
+            grammy: true,
+          },
+        },
+        albums: {
+          select: {
+            id: true,
+            name: true,
+            year: true,
+            artistId: true,
+          },
+        },
+        tracks: {
+          select: {
+            id: true,
+            name: true,
+            duration: true,
+            artistId: true,
+            albumId: true,
+          },
+        },
+      },
+    });
+
     return {
-      artists: await this.prisma.artist.findMany({
-        where: {
-          favorites: {
-            some: {
-              id: favorites.id,
-            },
-          },
-        },
-      }),
-      albums: await this.prisma.album.findMany({
-        where: {
-          favorites: {
-            some: {
-              id: favorites.id,
-            },
-          },
-        },
-      }),
-      tracks: await this.prisma.track.findMany({
-        where: {
-          favorites: {
-            some: {
-              id: favorites.id,
-            },
-          },
-        },
-      }),
+      artists: favoritesWithRelations.artists,
+      albums: favoritesWithRelations.albums,
+      tracks: favoritesWithRelations.tracks,
     };
+  }
+
+  private async getOrCreateFavorites() {
+    let favorites = await this.prisma.favorites.findFirst();
+
+    if (!favorites) {
+      favorites = await this.prisma.favorites.create({
+        data: {},
+      });
+    }
+
+    return favorites;
   }
 
   async addTrack(id: string) {
@@ -62,9 +80,12 @@ export class FavoritesService {
         },
       });
     } catch (error) {
-      throw new UnprocessableEntityException(
-        `Track with id ${id} does not exist`,
-      );
+      if (error.code === 'P2025') {
+        throw new UnprocessableEntityException(
+          `Track with id ${id} does not exist`,
+        );
+      }
+      throw error;
     }
   }
 
@@ -147,17 +168,5 @@ export class FavoritesService {
         },
       },
     });
-  }
-
-  private async getOrCreateFavorites() {
-    let favorites = await this.prisma.favorites.findFirst();
-
-    if (!favorites) {
-      favorites = await this.prisma.favorites.create({
-        data: {},
-      });
-    }
-
-    return favorites;
   }
 }
