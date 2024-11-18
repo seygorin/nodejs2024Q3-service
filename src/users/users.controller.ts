@@ -46,7 +46,7 @@ export class UsersController {
         'Old password and new password are required',
       );
     }
-    return this.usersService.updatePassword(id, updatePasswordDto);
+    return this.usersService.update(id, updatePasswordDto);
   }
 
   @Delete(':id')

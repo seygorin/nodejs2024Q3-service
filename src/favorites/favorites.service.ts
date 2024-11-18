@@ -51,7 +51,6 @@ export class FavoritesService {
   async addTrack(id: string) {
     try {
       await this.tracksService.findOne(id);
-
       const favorites = await this.getOrCreateFavorites();
 
       await this.prisma.favorites.update({

@@ -2,11 +2,11 @@ services:
   db:
     image: postgres:15-alpine
     environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=library
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
     ports:
-      - '5432:5432'
+      - '${POSTGRES_PORT}:${POSTGRES_PORT}'
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - postgres_logs:/var/log/postgresql
@@ -14,7 +14,7 @@ services:
       - library-network
     restart: always
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER}']
       interval: 5s
       timeout: 5s
       retries: 5
@@ -25,11 +25,11 @@ services:
       dockerfile: Dockerfile
       target: production
     ports:
-      - '4000:4000'
-      - '5555:5555'
+      - '${PORT}:${PORT}'
+      - '${PORT_PRISMA}:${PORT_PRISMA}'
     environment:
-      - DATABASE_URL=postgresql://postgres:postgres@db:5432/library?schema=public
-      - PORT=4000
+      - DATABASE_URL=${DATABASE_URL}
+      - PORT=${PORT}
     volumes:
       - ./src:/app/src
       - ./dist:/app/dist
@@ -48,6 +48,7 @@ services:
 networks:
   library-network:
     driver: bridge
+
 volumes:
   postgres_data:
   postgres_logs:
