@@ -7,7 +7,6 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdatePasswordDto } from './dto/update-password.dto';
 import { UserResponse, UserFull } from './interfaces/user.interface';
-import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class UsersService {
@@ -41,12 +40,10 @@ export class UsersService {
   }
 
   async create(createUserDto: CreateUserDto): Promise<UserResponse> {
-    const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
-
     const user = await this.prisma.user.create({
       data: {
         login: createUserDto.login,
-        password: hashedPassword,
+        password: createUserDto.password,
       },
     });
 
@@ -59,16 +56,14 @@ export class UsersService {
   ): Promise<UserResponse> {
     const user = await this.findOne(id);
 
-    if (!(await bcrypt.compare(updateUserDto.oldPassword, user.password))) {
+    if (user.password !== updateUserDto.oldPassword) {
       throw new ForbiddenException('Old password is incorrect');
     }
-
-    const hashedPassword = await bcrypt.hash(updateUserDto.newPassword, 10);
 
     const updatedUser = await this.prisma.user.update({
       where: { id },
       data: {
-        password: hashedPassword,
+        password: updateUserDto.newPassword,
         version: {
           increment: 1,
         },
