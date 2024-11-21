@@ -1,32 +1,22 @@
-FROM node:18-alpine AS builder
+FROM node:18-alpine
 
 WORKDIR /app
+
+RUN apk add --no-cache postgresql-client && \
+    npm install -g @nestjs/cli && \
+    mkdir -p /app/logs
 
 COPY package*.json ./
-RUN npm ci
-
-COPY . .
-RUN npx prisma generate && \
-    npm run build
-
-FROM node:18-alpine AS production
-
-WORKDIR /app
-
-RUN mkdir -p /app/doc
-
-COPY package*.json tsconfig*.json ./
 COPY prisma ./prisma/
-COPY nest-cli.json ./
 
-RUN npm ci --omit=production && \
-    npm i -g @nestjs/cli && \
+RUN npm ci && \
     npx prisma generate && \
     npm cache clean --force && \
-    rm -rf /root/.npm
+    rm -rf /root/.npm /tmp/*
 
-COPY --from=builder /app/dist ./dist
+COPY . .
 
-EXPOSE 4000
+EXPOSE ${PORT}
+EXPOSE ${PORT_PRISMA}
 
-CMD ["sh", "-c", "npx prisma migrate deploy && nest start --watch"]
+CMD ["npm", "run", "start:dev"]

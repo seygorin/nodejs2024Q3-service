@@ -5,11 +5,31 @@ import { writeFileSync } from 'fs';
 import { join } from 'path';
 import * as yaml from 'yaml';
 import * as dotenv from 'dotenv';
+import { LoggingService } from './logging/logging.service';
+import { AllExceptionsFilter } from './filters/all-exceptions.filter';
+import { HttpAdapterHost } from '@nestjs/core';
 
 async function bootstrap() {
   dotenv.config();
 
   const app = await NestFactory.create(AppModule);
+
+  const loggingService = app.get(LoggingService);
+  const httpAdapter = app.get(HttpAdapterHost);
+  app.useGlobalFilters(new AllExceptionsFilter(httpAdapter, loggingService));
+
+  process.on('uncaughtException', (error: Error) => {
+    loggingService.error(`Uncaught Exception: ${error.message}`, error.stack, {
+      type: 'UncaughtException',
+    });
+    process.exit(1);
+  });
+
+  process.on('unhandledRejection', (reason: any) => {
+    loggingService.error(`Unhandled Rejection: ${reason}`, reason?.stack, {
+      type: 'UnhandledRejection',
+    });
+  });
 
   const config = new DocumentBuilder()
     .setTitle('Home Library Service')
