@@ -10,6 +10,7 @@ COPY package*.json ./
 COPY prisma ./prisma/
 
 RUN npm ci && \
+    npm install @nestjs/passport passport passport-jwt bcrypt @types/passport-jwt @types/bcrypt && \
     npx prisma generate && \
     npm cache clean --force && \
     rm -rf /root/.npm /tmp/*

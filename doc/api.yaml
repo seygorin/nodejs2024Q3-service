@@ -1,5 +1,64 @@
 openapi: 3.0.0
 paths:
+  /auth/signup:
+    post:
+      operationId: AuthController_signUp
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SignUpDto"
+      responses:
+        "201":
+          description: ""
+      tags: &a1
+        - Auth
+  /auth/login:
+    post:
+      operationId: AuthController_login
+      summary: Login user
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginDto"
+            examples:
+              example1:
+                summary: Login credentials example
+                value:
+                  login: testuser
+                  password: Test123!
+      responses:
+        "200":
+          description: Successfully logged in
+          content:
+            application/json:
+              example:
+                accessToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example-access-token
+                refreshToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example-refresh-token
+        "400":
+          description: Bad Request - validation error
+        "403":
+          description: Forbidden - invalid credentials
+      tags: *a1
+  /auth/refresh:
+    post:
+      operationId: AuthController_refresh
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RefreshTokenDto"
+      responses:
+        "200":
+          description: ""
+      tags: *a1
   /user:
     get:
       operationId: UsersController_findAll
@@ -7,6 +66,10 @@ paths:
       responses:
         "200":
           description: ""
+      tags: &a2
+        - Users
+      security: &a3
+        - JWT-auth: []
     post:
       operationId: UsersController_create
       parameters: []
@@ -19,6 +82,8 @@ paths:
       responses:
         "201":
           description: ""
+      tags: *a2
+      security: *a3
   /user/{id}:
     get:
       operationId: UsersController_findOne
@@ -31,6 +96,8 @@ paths:
       responses:
         "200":
           description: ""
+      tags: *a2
+      security: *a3
     put:
       operationId: UsersController_update
       parameters:
@@ -48,6 +115,8 @@ paths:
       responses:
         "200":
           description: ""
+      tags: *a2
+      security: *a3
     delete:
       operationId: UsersController_remove
       parameters:
@@ -59,6 +128,8 @@ paths:
       responses:
         "204":
           description: ""
+      tags: *a2
+      security: *a3
   /artist:
     get:
       operationId: ArtistsController_findAll
@@ -314,18 +385,59 @@ paths:
           description: ""
 info:
   title: Home Library Service
-  description: Home music library service
-  version: 1.0.0
+  description: "
+
+    \      ## Authentication
+
+    \      1. Use POST /auth/login to get tokens
+
+    \      2. Click 'Authorize' button at the top
+
+    \      3. Enter your access token in format: Bearer <token>
+
+    \      4. Now you can access protected endpoints
+
+    \    "
+  version: "1.0"
   contact: {}
 tags: []
 servers: []
 components:
   securitySchemes:
-    bearer:
+    JWT-auth:
       scheme: bearer
       bearerFormat: JWT
       type: http
+      name: JWT
+      description: Enter JWT token
+      in: header
   schemas:
+    SignUpDto:
+      type: object
+      properties:
+        login:
+          type: string
+          example: testuser
+          description: User login
+        password:
+          type: string
+          example: Test123!
+          description: User password
+      required:
+        - login
+        - password
+    LoginDto:
+      type: object
+      properties: {}
+    RefreshTokenDto:
+      type: object
+      properties:
+        refreshToken:
+          type: string
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+          description: Refresh token
+      required:
+        - refreshToken
     CreateUserDto:
       type: object
       properties:

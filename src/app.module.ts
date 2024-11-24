@@ -1,4 +1,8 @@
-import { Module, MiddlewareConsumer, NestModule } from '@nestjs/common';
+import { Module, NestModule, MiddlewareConsumer } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
+import { APP_GUARD } from '@nestjs/core';
+import { AuthModule } from './auth/auth.module';
+import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 import { PrismaModule } from '@/prisma/prisma.module';
 import { UsersModule } from '@/users/users.module';
 import { ArtistsModule } from '@/artists/artists.module';
@@ -10,6 +14,10 @@ import { LoggingMiddleware } from './middleware/logging.middleware';
 
 @Module({
   imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+    }),
+    AuthModule,
     PrismaModule,
     UsersModule,
     ArtistsModule,
@@ -17,7 +25,13 @@ import { LoggingMiddleware } from './middleware/logging.middleware';
     TracksModule,
     FavoritesModule,
   ],
-  providers: [LoggingService],
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: JwtAuthGuard,
+    },
+    LoggingService,
+  ],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {

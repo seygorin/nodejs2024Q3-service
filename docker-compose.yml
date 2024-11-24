@@ -13,7 +13,7 @@ services:
       - library-network
     restart: always
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER}']
       interval: 10s
       timeout: 5s
       retries: 5
@@ -27,6 +27,8 @@ services:
       - '${PORT_PRISMA}:${PORT_PRISMA}'
     environment:
       - DATABASE_URL=${DATABASE_URL}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+      - JWT_SECRET_REFRESH_KEY=${JWT_SECRET_REFRESH_KEY}
       - PORT=${PORT}
     volumes:
       - ./src:/app/src
@@ -50,6 +52,7 @@ services:
           sleep 1
         done &&
         echo 'Database is ready!' &&
+        npm install @nestjs/passport passport passport-jwt bcrypt @types/passport-jwt @types/bcrypt &&
         npx prisma generate &&
         npx prisma migrate deploy &&
         npm run start:dev
