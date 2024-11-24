@@ -1,0 +1,64 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid()) @db.Uuid
+  login     String
+  password  String
+  version   Int      @default(1)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("users")
+}
+
+model Artist {
+  id        String     @id @default(uuid()) @db.Uuid
+  name      String
+  grammy    Boolean
+  albums    Album[]
+  tracks    Track[]
+  favorites Favorites[] @relation("ArtistToFavorites")
+
+  @@map("artists")
+}
+
+model Album {
+  id        String     @id @default(uuid()) @db.Uuid
+  name      String
+  year      Int
+  artistId  String?    @db.Uuid
+  artist    Artist?    @relation(fields: [artistId], references: [id], onDelete: SetNull)
+  tracks    Track[]
+  favorites Favorites[] @relation("AlbumToFavorites")
+
+  @@map("albums")
+}
+
+model Track {
+  id        String     @id @default(uuid()) @db.Uuid
+  name      String
+  duration  Int
+  artistId  String?    @db.Uuid
+  albumId   String?    @db.Uuid
+  artist    Artist?    @relation(fields: [artistId], references: [id], onDelete: SetNull)
+  album     Album?     @relation(fields: [albumId], references: [id], onDelete: SetNull)
+  favorites Favorites[] @relation("TrackToFavorites")
+
+  @@map("tracks")
+}
+
+model Favorites {
+  id      String   @id @default(uuid()) @db.Uuid
+  artists Artist[] @relation("ArtistToFavorites")
+  albums  Album[]  @relation("AlbumToFavorites")
+  tracks  Track[]  @relation("TrackToFavorites")
+
+  @@map("favorites")
+}

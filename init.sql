@@ -1,0 +1,65 @@
+CREATE DATABASE library;
+
+\c library;
+
+CREATE TABLE IF NOT EXISTS users (
+    id UUID PRIMARY KEY,
+    login VARCHAR(255) NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    version INTEGER DEFAULT 1,
+    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS artists (
+    id UUID PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    grammy BOOLEAN NOT NULL,
+    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS albums (
+    id UUID PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    year INTEGER NOT NULL,
+    artistId UUID,
+    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (artistId) REFERENCES artists(id) ON DELETE SET NULL
+);
+
+CREATE TABLE IF NOT EXISTS tracks (
+    id UUID PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    duration INTEGER NOT NULL,
+    artistId UUID,
+    albumId UUID,
+    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (artistId) REFERENCES artists(id) ON DELETE SET NULL,
+    FOREIGN KEY (albumId) REFERENCES albums(id) ON DELETE SET NULL
+);
+
+CREATE TABLE IF NOT EXISTS favorites (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid()
+);
+
+CREATE TABLE IF NOT EXISTS favorites_artists (
+    favorites_id UUID REFERENCES favorites(id) ON DELETE CASCADE,
+    artist_id UUID REFERENCES artists(id) ON DELETE CASCADE,
+    PRIMARY KEY (favorites_id, artist_id)
+);
+
+CREATE TABLE IF NOT EXISTS favorites_albums (
+    favorites_id UUID REFERENCES favorites(id) ON DELETE CASCADE,
+    album_id UUID REFERENCES albums(id) ON DELETE CASCADE,
+    PRIMARY KEY (favorites_id, album_id)
+);
+
+CREATE TABLE IF NOT EXISTS favorites_tracks (
+    favorites_id UUID REFERENCES favorites(id) ON DELETE CASCADE,
+    track_id UUID REFERENCES tracks(id) ON DELETE CASCADE,
+    PRIMARY KEY (favorites_id, track_id)
+);
+

@@ -2,71 +2,103 @@
 
 ## Prerequisites
 
-- Git - [Download & Install Git](https://git-scm.com/downloads).
-- Node.js - [Download & Install Node.js](https://nodejs.org/en/download/) and the npm package manager.
+- Git - [Download & Install Git](https://git-scm.com/downloads)
+- Node.js - [Download & Install Node.js](https://nodejs.org/en/download/) and the npm package manager
+- Docker Desktop - [Download & Install Docker](https://www.docker.com/products/docker-desktop/)
 
-## Downloading
+## Installation
 
+1. Clone the repository:
+```bash
+git clone https://github.com/seygorin/nodejs2024Q3-service
+cd nodejs2024Q3-service
 ```
-git clone {repository URL}
+
+2. Change .env file in the root directory if you want to change the default port or database credentials.
+
+## Running Application
+
+### Using Docker (Recommended)
+
+1. Build and start containers:
+```bash
+npm run docker:build  # Build containers
+npm run docker:up     # Start containers and wait a bit
 ```
 
-## Installing NPM modules
-
+2. View logs:
+```bash
+npm run docker:logs
 ```
+
+3. Access services:
+- API: http://localhost:4000 (default)
+- Swagger UI: http://localhost:4000/api
+- Prisma Studio: http://localhost:5555 (after running `npm run prisma:studio`)
+
+4. Stop application:
+```bash
+npm run docker:down
+```
+
+### Using Local Environment
+
+1. Install dependencies:
+```bash
 npm install
 ```
 
-## Running application
-
+2. Start the application:
+```bash
+npm run start        # Production mode
+npm run start:dev    # Development mode with watch
 ```
-npm start
+
+## Database Management
+
+Access and manage database using Prisma Studio:
+```bash
+npm run prisma:studio
 ```
 
-After starting the app on port (4000 as default) you can open
-in your browser OpenAPI documentation by typing http://localhost:4000/doc/.
-For more information about OpenAPI/Swagger please visit https://swagger.io/.
+Generate Prisma client after schema changes:
+```bash
+npm run prisma:generate
+```
 
 ## Testing
 
-After application running open new terminal and enter:
-
-To run all tests without authorization
-
-```
-npm run test
+Run tests:
+```bash
+npm run test         # Run all tests without authorization
 ```
 
-To run only one of all test suites
+## Code Quality
 
-```
-npm run test -- <path to suite>
-```
-
-To run all test with authorization
-
-```
-npm run test:auth
+Format and lint code:
+```bash
+npm run format  # Format code using Prettier
+npm run lint    # Lint and auto-fix using ESLint
 ```
 
-To run only specific test suite with authorization
+## Security
 
-```
-npm run test:auth -- <path to suite>
-```
-
-### Auto-fix and format
-
-```
-npm run lint
+Scan for vulnerabilities:
+```bash
+npm run scan
 ```
 
+## API Documentation
+
+After starting the application, you can explore the API documentation:
+- Swagger UI: http://localhost:4000/api
+- OpenAPI specification: Available in `/doc` folder (api.yaml and api.json)
+
+## Docker Image
+
+The application image is available on Docker Hub:
+```bash
+docker pull seygorin/nodejs2024q3:latest
 ```
-npm run format
-```
 
-### Debugging in VSCode
-
-Press <kbd>F5</kbd> to debug.
-
-For more information, visit: https://code.visualstudio.com/docs/editor/debugging
+Or by [link](https://hub.docker.com/r/seygorin/nodejs2024q3).

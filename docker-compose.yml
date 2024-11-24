@@ -1,0 +1,55 @@
+services:
+  db:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+    ports:
+      - '${POSTGRES_PORT}:${POSTGRES_PORT}'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - postgres_logs:/var/log/postgresql
+    networks:
+      - library-network
+    restart: always
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER}']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    ports:
+      - '${PORT}:${PORT}'
+      - '${PORT_PRISMA}:${PORT_PRISMA}'
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - PORT=${PORT}
+    volumes:
+      - ./src:/app/src
+      - ./dist:/app/dist
+      - ./prisma:/app/prisma
+      - ./doc:/app/doc
+      - ./tsconfig.json:/app/tsconfig.json
+      - ./tsconfig.build.json:/app/tsconfig.build.json
+      - ./nest-cli.json:/app/nest-cli.jso
+    networks:
+      - library-network
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: always
+    command: sh -c "npm i -g @nestjs/cli && npx prisma generate && npx prisma migrate deploy && nest start --watch"
+    image: seygorin/nodejs2024q3:latest
+networks:
+  library-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  postgres_logs:
