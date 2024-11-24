@@ -48,6 +48,7 @@ paths:
   /auth/refresh:
     post:
       operationId: AuthController_refresh
+      summary: Refresh access token
       parameters: []
       requestBody:
         required: true
@@ -55,9 +56,23 @@ paths:
           application/json:
             schema:
               $ref: "#/components/schemas/RefreshTokenDto"
+            examples:
+              example1:
+                summary: Refresh token example
+                value:
+                  refreshToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
       responses:
         "200":
-          description: ""
+          description: Successfully refreshed tokens
+          content:
+            application/json:
+              example:
+                accessToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+                refreshToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        "401":
+          description: Unauthorized - refresh token required
+        "403":
+          description: Forbidden - invalid refresh token
       tags: *a1
   /user:
     get:

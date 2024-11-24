@@ -11,6 +11,7 @@ import * as bcrypt from 'bcrypt';
 import { SignUpDto } from './dto/signup.dto';
 import { LoginDto } from './dto/login.dto';
 import { RefreshTokenDto } from './dto/refresh.dto';
+import { LoggingService } from '../logging/logging.service';
 
 interface TokenPayload {
   userId: string;
@@ -23,9 +24,13 @@ export class AuthService {
     private prisma: PrismaService,
     private jwtService: JwtService,
     private usersService: UsersService,
+    private loggingService: LoggingService,
   ) {}
 
   async signUp(signUpDto: SignUpDto) {
+    this.loggingService.debug('Attempting to create new user', {
+      login: signUpDto.login,
+    });
     if (!signUpDto.login || !signUpDto.password) {
       throw new BadRequestException('Login and password are required');
     }
@@ -54,6 +59,7 @@ export class AuthService {
       },
     });
 
+    this.loggingService.log('User successfully created', { userId: user.id });
     return user;
   }
 
