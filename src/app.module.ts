@@ -9,7 +9,7 @@ import { ArtistsModule } from '@/artists/artists.module';
 import { AlbumsModule } from '@/albums/albums.module';
 import { TracksModule } from '@/tracks/tracks.module';
 import { FavoritesModule } from '@/favorites/favorites.module';
-import { LoggingService } from './logging/logging.service';
+import { LoggingModule } from './logging/logging.module';
 import { LoggingMiddleware } from './middleware/logging.middleware';
 
 @Module({
@@ -17,6 +17,7 @@ import { LoggingMiddleware } from './middleware/logging.middleware';
     ConfigModule.forRoot({
       isGlobal: true,
     }),
+    LoggingModule,
     AuthModule,
     PrismaModule,
     UsersModule,
@@ -30,7 +31,6 @@ import { LoggingMiddleware } from './middleware/logging.middleware';
       provide: APP_GUARD,
       useClass: JwtAuthGuard,
     },
-    LoggingService,
   ],
 })
 export class AppModule implements NestModule {
