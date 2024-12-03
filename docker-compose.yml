@@ -9,13 +9,12 @@ services:
       - '${POSTGRES_PORT}:${POSTGRES_PORT}'
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - postgres_logs:/var/log/postgresql
     networks:
       - library-network
     restart: always
     healthcheck:
       test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER}']
-      interval: 5s
+      interval: 10s
       timeout: 5s
       retries: 5
 
@@ -23,33 +22,47 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-      target: production
     ports:
       - '${PORT}:${PORT}'
       - '${PORT_PRISMA}:${PORT_PRISMA}'
     environment:
       - DATABASE_URL=${DATABASE_URL}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+      - JWT_SECRET_REFRESH_KEY=${JWT_SECRET_REFRESH_KEY}
       - PORT=${PORT}
     volumes:
       - ./src:/app/src
       - ./dist:/app/dist
       - ./prisma:/app/prisma
+      - ./logs:/app/logs
       - ./doc:/app/doc
       - ./tsconfig.json:/app/tsconfig.json
       - ./tsconfig.build.json:/app/tsconfig.build.json
-      - ./nest-cli.json:/app/nest-cli.jso
+      - ./nest-cli.json:/app/nest-cli.json
     networks:
       - library-network
     depends_on:
       db:
         condition: service_healthy
     restart: always
-    command: sh -c "npm i -g @nestjs/cli && npx prisma generate && npx prisma migrate deploy && nest start --watch"
+    command: >
+      sh -c "
+        echo 'Waiting for database...' &&
+        while ! pg_isready -h db -p 5432 -U ${POSTGRES_USER}; do
+          sleep 1
+        done &&
+        echo 'Database is ready!' &&
+        npm install @nestjs/passport passport passport-jwt bcrypt @types/passport-jwt @types/bcrypt &&
+        npx prisma generate &&
+        npx prisma migrate deploy &&
+        npm run start:dev
+      "
     image: seygorin/nodejs2024q3:latest
+
 networks:
   library-network:
     driver: bridge
 
 volumes:
   postgres_data:
-  postgres_logs:
+  app_logs:

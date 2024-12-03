@@ -67,68 +67,66 @@ export class FavoritesService {
   }
 
   async addTrack(id: string) {
-    try {
-      await this.tracksService.findOne(id);
-      const favorites = await this.getOrCreateFavorites();
+    const track = await this.prisma.track.findUnique({
+      where: { id },
+    });
 
-      await this.prisma.favorites.update({
-        where: { id: favorites.id },
-        data: {
-          tracks: {
-            connect: { id },
-          },
-        },
-      });
-    } catch (error) {
-      if (error.code === 'P2025') {
-        throw new UnprocessableEntityException(
-          `Track with id ${id} does not exist`,
-        );
-      }
-      throw error;
+    if (!track) {
+      throw new UnprocessableEntityException('Track not found');
     }
+
+    const favorites = await this.getOrCreateFavorites();
+
+    await this.prisma.favorites.update({
+      where: { id: favorites.id },
+      data: {
+        tracks: {
+          connect: { id },
+        },
+      },
+    });
   }
 
   async addAlbum(id: string) {
-    try {
-      await this.albumsService.findOne(id);
+    const album = await this.prisma.album.findUnique({
+      where: { id },
+    });
 
-      const favorites = await this.getOrCreateFavorites();
-
-      await this.prisma.favorites.update({
-        where: { id: favorites.id },
-        data: {
-          albums: {
-            connect: { id },
-          },
-        },
-      });
-    } catch (error) {
-      throw new UnprocessableEntityException(
-        `Album with id ${id} does not exist`,
-      );
+    if (!album) {
+      throw new UnprocessableEntityException('Album not found');
     }
+
+    const favorites = await this.getOrCreateFavorites();
+
+    await this.prisma.favorites.update({
+      where: { id: favorites.id },
+      data: {
+        albums: {
+          connect: { id },
+        },
+      },
+    });
   }
 
   async addArtist(id: string) {
-    try {
-      await this.artistsService.findOne(id);
+    const artist = await this.prisma.artist.findUnique({
+      where: { id },
+    });
 
-      const favorites = await this.getOrCreateFavorites();
-
-      await this.prisma.favorites.update({
-        where: { id: favorites.id },
-        data: {
-          artists: {
-            connect: { id },
-          },
-        },
-      });
-    } catch (error) {
-      throw new UnprocessableEntityException(
-        `Artist with id ${id} does not exist`,
-      );
+    if (!artist) {
+      throw new UnprocessableEntityException('Artist not found');
     }
+
+    const favorites = await this.getOrCreateFavorites();
+
+    await this.prisma.favorites.update({
+      where: { id: favorites.id },
+      data: {
+        artists: {
+          connect: { id },
+        },
+      },
+    });
   }
 
   async removeTrack(id: string) {
