@@ -12,7 +12,10 @@ import {
 } from '@nestjs/common';
 import { AlbumsService } from './albums.service';
 import { CreateAlbumDto } from './dto/create-album.dto';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 
+@ApiTags('Albums')
+@ApiBearerAuth('JWT-auth')
 @Controller('album')
 export class AlbumsController {
   constructor(private readonly albumsService: AlbumsService) {}
