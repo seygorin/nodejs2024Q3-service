@@ -3,6 +3,7 @@ FROM node:18-alpine
 WORKDIR /app
 
 RUN apk add --no-cache postgresql-client && \
+    npm install -g npm@latest && \
     npm install -g @nestjs/cli && \
     mkdir -p /app/logs && \
     chown -R node:node /app/logs && \
