@@ -17,7 +17,9 @@ RUN npm ci && \
 
 COPY . .
 
+RUN npm run build
+
 EXPOSE ${PORT}
 EXPOSE ${PORT_PRISMA}
 
-CMD ["npm", "run", "start:dev"]
+CMD ["npm", "run", "start:prod"]

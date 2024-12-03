@@ -52,10 +52,9 @@ services:
           sleep 1
         done &&
         echo 'Database is ready!' &&
-        npm install @nestjs/passport passport passport-jwt bcrypt @types/passport-jwt @types/bcrypt &&
         npx prisma generate &&
         npx prisma migrate deploy &&
-        npm run start:dev
+        npm run start:prod
       "
     image: seygorin/nodejs2024q3:latest
 
